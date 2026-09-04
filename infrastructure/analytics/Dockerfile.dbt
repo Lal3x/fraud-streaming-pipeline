@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+RUN pip install --no-cache-dir \
+    "dbt-core==1.12.3" \
+    "dbt-postgres==1.11.0"
+
+WORKDIR /opt/dbt/fraud_analytics
+COPY dbt/fraud_analytics/ ./
+
+ENTRYPOINT ["dbt"]

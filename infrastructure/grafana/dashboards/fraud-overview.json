@@ -1,0 +1,122 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showPercentChange": false, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT count(*) AS \"Transações\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type')", "refId": "A"}],
+      "title": "Transações",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showPercentChange": false, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT count(*) FILTER (WHERE predicted_fraud) AS \"Alertas das regras\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type')", "refId": "A"}],
+      "title": "Alertas das regras",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showPercentChange": false, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT count(*) FILTER (WHERE is_fraud) AS \"Fraudes rotuladas\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type')", "refId": "A"}],
+      "title": "Fraudes rotuladas",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "decimals": 2, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "currencyUSD"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showPercentChange": false, "textMode": "auto", "wideLayout": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT coalesce(sum(amount), 0) AS \"Volume financeiro\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type')", "refId": "A"}],
+      "title": "Volume financeiro",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 16, "x": 0, "y": 4},
+      "id": 5,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT $__timeGroupAlias(event_time, '1h'), count(*) AS \"Transações\", count(*) FILTER (WHERE predicted_fraud) AS \"Alertas\", count(*) FILTER (WHERE is_fraud) AS \"Fraudes\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type') GROUP BY 1 ORDER BY 1", "refId": "A"}],
+      "title": "Transações e fraudes ao longo do tempo",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 4},
+      "id": 6,
+      "options": {"displayLabels": ["name", "percent"], "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "values": ["value", "percent"]}, "pieType": "donut", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": true}, "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT transaction_type AS \"Tipo\", count(*) AS \"Transações\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) GROUP BY transaction_type ORDER BY 2 DESC", "refId": "A"}],
+      "title": "Distribuição por tipo",
+      "type": "piechart"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "id": 7,
+      "options": {"cellHeight": "sm", "footer": {"countRows": false, "fields": "", "reducer": ["sum"], "show": false}, "showHeader": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT execution_date AS \"Data\", execution_count AS \"Execuções\", successful_count AS \"Sucessos\", failed_count AS \"Falhas\", records_read AS \"Lidos\", records_inserted AS \"Inseridos\", records_rejected AS \"Rejeitados\", round(average_duration_seconds::numeric, 2) AS \"Duração média (s)\" FROM analytics.mart_pipeline_health ORDER BY execution_date DESC LIMIT 30", "refId": "A"}],
+      "title": "Saúde do pipeline",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "custom": {"align": "auto", "cellOptions": {"type": "auto"}, "inspect": false}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "id": 8,
+      "options": {"cellHeight": "sm", "footer": {"countRows": false, "fields": "", "reducer": ["sum"], "show": false}, "showHeader": true},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT event_time AS \"Horário\", event_id AS \"Evento\", transaction_type AS \"Tipo\", amount AS \"Valor\", risk_level AS \"Risco\", risk_score AS \"Score\", triggered_rules AS \"Regras\", is_fraud AS \"Fraude real\" FROM analytics.fct_transactions WHERE $__timeFilter(event_time) AND predicted_fraud AND ('$transaction_type' = 'ALL' OR transaction_type = '$transaction_type') ORDER BY event_time DESC LIMIT 100", "refId": "A"}],
+      "title": "Alertas recentes",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": ["fraud", "streaming", "analytics"],
+  "templating": {
+    "list": [
+      {
+        "allValue": "ALL",
+        "current": {"selected": true, "text": "Todos", "value": "ALL"},
+        "datasource": {"type": "postgres", "uid": "fraud-analytics-postgres"},
+        "definition": "SELECT DISTINCT transaction_type FROM analytics.fct_transactions ORDER BY 1",
+        "includeAll": true,
+        "label": "Tipo de transação",
+        "multi": false,
+        "name": "transaction_type",
+        "options": [],
+        "query": "SELECT DISTINCT transaction_type FROM analytics.fct_transactions ORDER BY 1",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-10y", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Fraud Streaming — Visão geral",
+  "uid": "fraud-streaming-overview",
+  "version": 1,
+  "weekStart": ""
+}

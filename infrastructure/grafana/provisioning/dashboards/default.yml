@@ -1,0 +1,15 @@
+apiVersion: 1
+
+providers:
+  - name: Fraud Streaming Pipeline
+    orgId: 1
+    folder: Fraud Analytics
+    folderUid: fraud-analytics
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

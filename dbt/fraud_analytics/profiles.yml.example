@@ -1,0 +1,13 @@
+fraud_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('ANALYTICS_DB_HOST', 'localhost') }}"
+      port: "{{ env_var('ANALYTICS_DB_PORT', '5434') | int }}"
+      dbname: "{{ env_var('ANALYTICS_DB_NAME', 'fraud_analytics') }}"
+      user: "{{ env_var('ANALYTICS_DB_USER') }}"
+      password: "{{ env_var('ANALYTICS_DB_PASSWORD') }}"
+      schema: analytics
+      threads: 4
+      connect_timeout: 10

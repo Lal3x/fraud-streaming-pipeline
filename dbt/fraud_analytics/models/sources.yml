@@ -1,0 +1,74 @@
+version: 2
+
+sources:
+  - name: silver
+    description: Dados validados e enriquecidos pelo Spark, carregados de forma idempotente.
+    schema: silver
+    tables:
+      - name: transactions
+        description: Transações PaySim válidas. is_fraud é somente rótulo de avaliação.
+        columns:
+          - name: event_id
+            description: Identificador determinístico e chave de idempotência.
+            data_tests: [not_null, unique]
+          - name: event_time
+            data_tests: [not_null]
+          - name: amount
+            data_tests: [not_null, non_negative]
+          - name: transaction_type
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['CASH_IN', 'CASH_OUT', 'DEBIT', 'PAYMENT', 'TRANSFER']
+          - name: risk_level
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['LOW', 'MEDIUM', 'HIGH']
+          - name: risk_score
+            data_tests:
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+                    max_value: 100
+      - name: fraud_alerts
+        description: Subconjunto marcado pelas regras independentes do rótulo verdadeiro.
+        columns:
+          - name: event_id
+            data_tests:
+              - not_null
+              - unique
+              - relationships:
+                  arguments:
+                    to: source('silver', 'transactions')
+                    field: event_id
+  - name: monitoring
+    description: Auditoria operacional das cargas Silver para PostgreSQL.
+    schema: monitoring
+    tables:
+      - name: pipeline_metrics
+        description: Contagens reconciliáveis, status e erros de cada execução.
+        columns:
+          - name: load_id
+            data_tests: [not_null, unique]
+          - name: status
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['RUNNING', 'SUCCESS', 'FAILED']
+  - name: anomaly_scoring
+    description: Resultados de modelos persistidos separadamente das features.
+    schema: analytics
+    tables:
+      - name: transaction_anomaly_scores
+        description: Scores por evento e versão do modelo, sem alterar a tabela de features.
+        columns:
+          - name: event_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('silver', 'transactions')
+                    field: event_id
+          - name: model_version
+            data_tests: [not_null]

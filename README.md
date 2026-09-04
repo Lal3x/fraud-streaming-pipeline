@@ -135,3 +135,8 @@ atingem 71,84%; no CI, os testes Spark também são executados com Java 17.
 Este é um ambiente educacional e de portfólio. Ele demonstra decisões e
 práticas de uma plataforma de dados, mas não deve ser interpretado como um
 sistema antifraude pronto para produção ou como recomendação financeira.
+
+
+## Segurança
+
+O ambiente utiliza credenciais locais definidas pelo usuário e monta o Docker socket no Airflow exclusivamente para orquestração no laboratório. Não reutilize essa configuração em ambientes compartilhados ou produtivos. Consulte [docs/SECURITY.md](docs/SECURITY.md).

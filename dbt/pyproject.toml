@@ -1,0 +1,17 @@
+[project]
+name = "fraud-analytics-dbt"
+version = "0.1.0"
+description = "Transformações analíticas do pipeline de fraudes"
+authors = [
+    {name = "Lucas Alexandre",email = "lucas@gmail.com"}
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dbt-core (>=1.12.3,<2.0.0)",
+    "dbt-postgres (>=1.11.0,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

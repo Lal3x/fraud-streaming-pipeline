@@ -1,0 +1,163 @@
+name: fraud-analytics
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: fraud-analytics-postgres
+    hostname: analytics-postgres
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${ANALYTICS_DB_USER}
+      POSTGRES_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+      POSTGRES_DB: ${ANALYTICS_DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${ANALYTICS_DB_PORT:-5434}:5432"
+    volumes:
+      - analytics_postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - analytics_network
+
+  loader-permissions:
+    image: spark:4.1.2-scala2.13-java17-python3-ubuntu
+    container_name: fraud-analytics-loader-permissions
+    profiles: ["loader"]
+    user: "0:0"
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - mkdir -p /tmp/.ivy2/cache /tmp/.ivy2/jars && chmod -R 0777 /tmp/.ivy2
+    volumes:
+      - loader_ivy:/tmp/.ivy2
+    restart: "no"
+
+  silver-loader:
+    image: fraud-silver-loader:local
+    build:
+      context: ../..
+      dockerfile: infrastructure/analytics/Dockerfile
+    container_name: fraud-silver-postgres-loader
+    profiles: ["loader"]
+    mem_limit: 1200m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      loader-permissions:
+        condition: service_completed_successfully
+    env_file:
+      - ../../.env
+    environment:
+      ANALYTICS_DB_HOST: analytics-postgres
+      ANALYTICS_DB_PORT: 5432
+      ANALYTICS_DB_NAME: ${ANALYTICS_DB_NAME}
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      SILVER_TRANSACTIONS_PATH: ${SILVER_TRANSACTIONS_PATH}
+      SILVER_ALERTS_PATH: ${SILVER_ALERTS_PATH}
+      PYTHONPATH: /opt/spark/project/src
+    command:
+      - /opt/spark/bin/spark-submit
+      - --master
+      - local[2]
+      - --conf
+      - spark.jars.ivy=/tmp/.ivy2
+      - --conf
+      - spark.driver.memory=768m
+      - --conf
+      - spark.sql.shuffle.partitions=2
+      - --packages
+      - org.apache.hadoop:hadoop-aws:3.4.2,org.postgresql:postgresql:42.7.13
+      - /opt/spark/project/src/fraud_streaming_pipeline/etl/loading/job.py
+    volumes:
+      - loader_ivy:/tmp/.ivy2
+    networks:
+      - analytics_network
+      - streaming_network
+    restart: "no"
+
+  dbt-gold:
+    image: fraud-dbt-gold:local
+    build:
+      context: ../..
+      dockerfile: infrastructure/analytics/Dockerfile.dbt
+    container_name: fraud-dbt-gold
+    profiles: ["gold"]
+    mem_limit: 768m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ANALYTICS_DB_HOST: analytics-postgres
+      ANALYTICS_DB_PORT: 5432
+      ANALYTICS_DB_NAME: ${ANALYTICS_DB_NAME}
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+    command:
+      - build
+      - --project-dir
+      - /opt/dbt/fraud_analytics
+      - --profiles-dir
+      - /opt/dbt/fraud_analytics
+    networks:
+      - analytics_network
+    restart: "no"
+
+  isolation-forest:
+    image: fraud-isolation-forest:local
+    build:
+      context: ../..
+      dockerfile: infrastructure/analytics/Dockerfile.ml
+    container_name: fraud-isolation-forest
+    profiles: ["ml"]
+    mem_limit: 1200m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ANALYTICS_DB_HOST: analytics-postgres
+      ANALYTICS_DB_PORT: 5432
+      ANALYTICS_DB_NAME: ${ANALYTICS_DB_NAME}
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+      ML_TRAIN_FRACTION: ${ML_TRAIN_FRACTION:-0.8}
+      ML_CONTAMINATION: ${ML_CONTAMINATION:-0.01}
+      ML_RANDOM_STATE: ${ML_RANDOM_STATE:-42}
+      ML_MIN_TRAIN_ROWS: ${ML_MIN_TRAIN_ROWS:-100}
+      ML_MAX_ROWS: ${ML_MAX_ROWS:-100000}
+      ML_N_ESTIMATORS: ${ML_N_ESTIMATORS:-100}
+      ML_N_JOBS: ${ML_N_JOBS:-2}
+      ML_PERSIST_BATCH_SIZE: ${ML_PERSIST_BATCH_SIZE:-5000}
+      ML_MODEL_VERSION: ${ML_MODEL_VERSION:-}
+      PYTHONPATH: /app/src
+    networks:
+      - analytics_network
+    restart: "no"
+
+volumes:
+  analytics_postgres_data:
+    name: fraud-analytics-postgres-data
+  loader_ivy:
+    name: fraud-analytics-loader-ivy
+
+networks:
+  analytics_network:
+    name: fraud-analytics-network
+    driver: bridge
+  streaming_network:
+    name: fraud-streaming-network
+    external: true

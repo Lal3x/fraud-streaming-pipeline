@@ -1,0 +1,26 @@
+apiVersion: 1
+
+deleteDatasources:
+  - name: Fraud Analytics PostgreSQL
+    orgId: 1
+
+datasources:
+  - name: Fraud Analytics PostgreSQL
+    uid: fraud-analytics-postgres
+    orgId: 1
+    type: postgres
+    access: proxy
+    url: analytics-postgres:5432
+    user: $ANALYTICS_DB_USER
+    isDefault: true
+    editable: false
+    jsonData:
+      database: $ANALYTICS_DB_NAME
+      sslmode: disable
+      postgresVersion: 1700
+      timescaledb: false
+      maxOpenConns: 10
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: $ANALYTICS_DB_PASSWORD

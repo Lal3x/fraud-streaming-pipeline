@@ -1,0 +1,22 @@
+select
+    event_id, source_record_id, schema_version, event_time, event_date, event_hour,
+    produced_at, source, step, upper(trim(transaction_type)) as transaction_type,
+    amount::numeric(20, 2) as amount, origin_account,
+    origin_old_balance::numeric(20, 2) as origin_old_balance,
+    origin_new_balance::numeric(20, 2) as origin_new_balance, destination_account,
+    destination_old_balance::numeric(20, 2) as destination_old_balance,
+    destination_new_balance::numeric(20, 2) as destination_new_balance,
+    is_fraud, is_flagged_fraud, is_merchant_destination,
+    origin_balance_change::numeric(20, 2) as origin_balance_change,
+    destination_balance_change::numeric(20, 2) as destination_balance_change,
+    expected_origin_balance::numeric(20, 2) as expected_origin_balance,
+    origin_balance_difference::numeric(20, 2) as origin_balance_difference,
+    has_origin_balance_anomaly, has_destination_balance_anomaly,
+    is_origin_account_drained, processing_latency_seconds,
+    upper(trim(amount_range)) as amount_range, rule_high_amount,
+    rule_risky_transaction_type, rule_origin_account_drained,
+    rule_origin_balance_anomaly, triggered_rules, risk_score,
+    upper(trim(risk_level)) as risk_level, predicted_fraud, kafka_topic,
+    kafka_partition, kafka_offset, kafka_timestamp, ingested_at, ingestion_date,
+    source_file, load_id, loaded_at
+from {{ source('silver', 'transactions') }}

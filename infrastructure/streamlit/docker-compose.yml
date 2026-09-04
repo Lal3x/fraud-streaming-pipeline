@@ -1,0 +1,26 @@
+name: fraud-streamlit
+
+services:
+  dashboard:
+    image: fraud-streamlit:local
+    build:
+      context: ../..
+      dockerfile: infrastructure/streamlit/Dockerfile
+    container_name: fraud-streamlit
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      ANALYTICS_DB_HOST: analytics-postgres
+      ANALYTICS_DB_PORT: 5432
+      ANALYTICS_DB_NAME: ${ANALYTICS_DB_NAME}
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD}
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    networks:
+      - analytics_network
+
+networks:
+  analytics_network:
+    name: fraud-analytics-network
+    external: true

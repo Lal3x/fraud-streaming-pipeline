@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python environments and caches
+.venv/
+venv/
+env/
+**/.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+site/
+
+# Runtime data and local state
+data/raw/
+data/bronze/
+data/checkpoints/
+*.parquet
+
+# Airflow runtime files
+infrastructure/airflow/logs/
+infrastructure/airflow/airflow.db
+infrastructure/airflow/airflow-webserver.pid
+
+# dbt generated artifacts
+dbt/logs/
+dbt/**/logs/
+dbt/**/target/
+dbt/**/dbt_packages/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/

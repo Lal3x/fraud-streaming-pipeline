@@ -1,0 +1,114 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: View tipada e normalizada das transações Silver, sem regras novas.
+    columns:
+      - name: event_id
+        description: Chave de rastreabilidade do evento de origem.
+        data_tests: [not_null, unique]
+      - name: event_time
+        data_tests: [not_null]
+      - name: amount
+        data_tests: [not_null, non_negative]
+  - name: stg_fraud_alerts
+    description: View normalizada dos alertas produzidos pelas regras Spark.
+  - name: stg_pipeline_metrics
+    description: View das métricas e duração das cargas.
+  - name: int_transaction_classification
+    description: Centraliza a classificação posterior entre regras e rótulo real.
+  - name: int_account_activity
+    description: Métricas diárias de entrada e saída por conta.
+  - name: int_daily_transaction_metrics
+    description: Agregações diárias reutilizadas pelos marts.
+  - name: fct_transactions
+    description: Fato incremental no grão de uma transação.
+    columns:
+      - name: event_id
+        data_tests: [not_null, unique]
+      - name: origin_account
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_accounts')
+                field: account_id
+      - name: destination_account
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_accounts')
+                field: account_id
+  - name: fct_fraud_alerts
+    description: Fato incremental dos alertas, com rótulos apenas para avaliação posterior.
+    columns:
+      - name: event_id
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('fct_transactions')
+                field: event_id
+  - name: dim_accounts
+    description: Dimensão consolidada das contas de origem e destino.
+    columns:
+      - name: account_id
+        data_tests: [not_null, unique]
+  - name: mart_fraud_daily
+    description: KPIs diários de volume, alertas e fraude rotulada.
+  - name: mart_pipeline_health
+    description: Saúde diária das cargas, incluindo falhas, duração e reconciliação.
+  - name: mart_benford_first_digit
+    description: >-
+      Diagnóstico populacional da Lei de Benford para valores positivos e amostras
+      mínimas. Não classifica fraude individual; o PaySim sintético pode não seguir
+      Benford naturalmente.
+    columns:
+      - name: first_digit
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 9
+      - name: observed_proportion
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+  - name: ml_transaction_features
+    description: >-
+      Features sem rótulos para um futuro Isolation Forest. Z-scores exigem
+      histórico suficiente, são sensíveis à distribuição e podem ficar nulos.
+      O treino futuro deverá usar corte temporal e ajustar transformações só no treino.
+    columns:
+      - name: event_id
+        data_tests: [not_null, unique]
+    data_tests:
+      - column_absent:
+          arguments: {column_name: is_fraud}
+      - column_absent:
+          arguments: {column_name: is_flagged_fraud}
+      - column_absent:
+          arguments: {column_name: predicted_fraud}
+  - name: mart_anomaly_evaluation
+    description: >-
+      Avaliação pós-pontuação do modelo mais recente contra is_fraud, restrita ao
+      período de avaliação. Rótulos nunca são usados para ajustar o modelo.
+
+exposures:
+  - name: future_streamlit_fraud_dashboard
+    type: dashboard
+    maturity: low
+    description: >-
+      Dashboard planejado com KPIs, filtros, Benford, anomalias e avaliação
+      separada contra os rótulos reais. Anomalia não significa necessariamente fraude.
+    depends_on:
+      - ref('mart_fraud_daily')
+      - ref('mart_pipeline_health')
+      - ref('mart_benford_first_digit')
+      - ref('ml_transaction_features')
+      - ref('mart_anomaly_evaluation')
+    owner:
+      name: Data Engineering
+      email: data@example.com
