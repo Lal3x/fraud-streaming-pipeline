@@ -102,18 +102,18 @@ jobs:
         run: poetry run mkdocs build --strict
 
       - name: Configurar GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.repository.visibility == 'public'
         uses: actions/configure-pages@v5
 
       - name: Preparar artefato do GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.repository.visibility == 'public'
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
 
   deploy-pages:
     name: Publicar documentação
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.repository.visibility == 'public'
     needs: documentation
     runs-on: ubuntu-latest
     timeout-minutes: 10
