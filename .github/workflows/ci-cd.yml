@@ -120,9 +120,9 @@ jobs:
   deploy-pages:
     name: Publicar documentação
     if: |
-          github.ref == 'refs/heads/main' &&
-          github.event.repository.visibility == 'public' &&
-          (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      github.ref == 'refs/heads/main' &&
+      github.event.repository.visibility == 'public' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: documentation
     runs-on: ubuntu-latest
     timeout-minutes: 10
