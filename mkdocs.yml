@@ -3,7 +3,7 @@ site_description: Pipeline de detecção de fraude com Kafka, Spark, dbt e Isola
 site_url: https://lal3x.github.io/fraud-streaming-pipeline/
 repo_url: https://github.com/Lal3x/fraud-streaming-pipeline
 repo_name: Lal3x/fraud-streaming-pipeline
-edit_uri: edit/dev/docs/
+edit_uri: edit/main/docs/
 theme:
   name: material
   language: pt-BR
@@ -48,6 +48,7 @@ nav:
   - Decisões técnicas: decisions.md
   - Desenvolvimento: development.md
   - Solução de problemas: troubleshooting.md
+  - Segurança: SECURITY.md
 
 markdown_extensions:
   - admonition
